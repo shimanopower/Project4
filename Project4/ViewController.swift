@@ -16,6 +16,7 @@ class ViewController: UIViewController, WKNavigationDelegate {
     // WKWebView is a Class/Object of WebKit
     
     var aViewOfAWebpage: WKWebView!
+    var progressView: UIProgressView!
     
     // loadView() is an instance method of UIViewControler load and create a view and assign it to the view property
     
@@ -29,7 +30,23 @@ class ViewController: UIViewController, WKNavigationDelegate {
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Open", style: .plain, target: self, action: #selector(openWhatMyUserTapped))
+        // navigationItem P of UIViewController is a navigation item used to represent the view controller in a parent's navigation bar
+        navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Select Portfolio", style: .plain, target: self, action: #selector(openWhatMyUserTapped))
+        
+        progressView = UIProgressView(progressViewStyle: .default)
+        progressView.sizeToFit()
+        let progressButton = UIBarButtonItem(customView: progressView)
+        // UIBarButtonItem is a class that is a specialized button for placement on a toolbar or a tab bar
+        // flexibleSpace is an enum case
+        let ourSpacer = UIBarButtonItem(barButtonSystemItem: .flexibleSpace, target: nil, action: nil)
+        let refeshButton = UIBarButtonItem(barButtonSystemItem: .refresh, target: aViewOfAWebpage, action: #selector(aViewOfAWebpage.reload))
+        // toolbarItems is an instance proprty of UIViewController
+        toolbarItems = [progressButton, ourSpacer, refeshButton]
+        // navigationController? is an instance property inhereting from UINavigationControlelr
+        // .isToolbarHidden bool, instance proprty of UINavigationController
+        navigationController?.isToolbarHidden = false
+        
+        aViewOfAWebpage.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
         // URL is a struct; a value set to a resource like a file or website; comes from the Foundation framework
         // ! force unwraps
         let urlOfMyPortfolioWebsite = URL(string: "https://www.audreysmonsters.com")!
@@ -49,21 +66,26 @@ class ViewController: UIViewController, WKNavigationDelegate {
         alertcontroller.addAction(UIAlertAction(title: "shawndimpfl.com", style: .default, handler: openWebpage))
         alertcontroller.addAction(UIAlertAction(title: "audreysmonsters.com", style: .default, handler: openWebpage))
         // .cancel is an enum case
-        alertcontroller.addAction(UIAlertAction(title: "cancel", style: .cancel))
+        alertcontroller.addAction(UIAlertAction(title: "cancel", style: .cancel, handler: nil))
         // .popoverPresentationController is an instance property of UIViewController
-        alertcontroller.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
+        alertcontroller.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItem
         // present an instance method of UIViewController that presents a view controller modally
         present(alertcontroller, animated: true)
     }
     
     func openWebpage(action: UIAlertAction) {
-        let theURLOfTheWebsiteThatWeWantToOpen = URL(string: "https//" + action.title!)!
-        aViewOfAWebpage.load(URLRequest(url: theURLOfTheWebsiteThatWeWantToOpen))
+        // theURLOfTheWebsiteThatWeWantToOpen
+        let url = URL(string: "https://" + action.title!)!
+        aViewOfAWebpage.load(URLRequest(url: url))
     }
     
-    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    func aViewOfAWebpage(_ aViewOfAWebpage: WKWebView, didFinish navigation: WKNavigation!) {
         title = aViewOfAWebpage.title
     }
 
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            progressView.progress = Float(aViewOfAWebpage.estimatedProgress)
+        }
+    }
 }
-
