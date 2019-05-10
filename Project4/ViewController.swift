@@ -17,6 +17,9 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     var aViewOfAWebpage: WKWebView!
     var progressView: UIProgressView!
+    // var allowedWebsites = ["audreysmonsters.com", "shawndimpfl.com"]
+    var allowedWebsites = ["hero": "audreysmonsters.com",
+                           "devil": "shawndimpfl.com"]
     
     // loadView() is an instance method of UIViewControler load and create a view and assign it to the view property
     
@@ -49,10 +52,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         aViewOfAWebpage.addObserver(self, forKeyPath: #keyPath(WKWebView.estimatedProgress), options: .new, context: nil)
         // URL is a struct; a value set to a resource like a file or website; comes from the Foundation framework
         // ! force unwraps
-        let urlOfMyPortfolioWebsite = URL(string: "https://www.audreysmonsters.com")!
+       
+        let url = URL(string: "http://www." + allowedWebsites["hero"]!)!
         // URLRequest is a struct independent of protodol or URL scheme. It encapsulates two basic data elements
         // .load is an instance method of WKWebView
-        aViewOfAWebpage.load(URLRequest(url: urlOfMyPortfolioWebsite))
+        aViewOfAWebpage.load(URLRequest(url: url))
         // .allowsBackForwardNavigationGesutres instance property of WKWebView / a bool allows backwards forward swiping between web pages
         aViewOfAWebpage.allowsBackForwardNavigationGestures = true
         // Do any additional setup after loading the view.
@@ -63,9 +67,11 @@ class ViewController: UIViewController, WKNavigationDelegate {
         let alertcontroller = UIAlertController(title: "open webpage", message: nil, preferredStyle: .actionSheet)
         // UIAlertAction is an instance method of UIAlertController
         // note for later: take the title and replace it with bitch and then create a diction and use those titles as keys in the website with the values of the current titles (the websites)
-        alertcontroller.addAction(UIAlertAction(title: "shawndimpfl.com", style: .default, handler: openWebpage))
-        alertcontroller.addAction(UIAlertAction(title: "audreysmonsters.com", style: .default, handler: openWebpage))
-        // .cancel is an enum case
+       
+        for (title, _) in allowedWebsites {
+            alertcontroller.addAction(UIAlertAction(title: title, style: .default, handler: openWebpage))
+            }
+        
         alertcontroller.addAction(UIAlertAction(title: "cancel", style: .cancel, handler: nil))
         // .popoverPresentationController is an instance property of UIViewController
         alertcontroller.popoverPresentationController?.barButtonItem = self.navigationItem.rightBarButtonItem
@@ -75,12 +81,29 @@ class ViewController: UIViewController, WKNavigationDelegate {
     
     func openWebpage(action: UIAlertAction) {
         // theURLOfTheWebsiteThatWeWantToOpen
-        let url = URL(string: "https://" + action.title!)!
+        let url = URL(string: "https://www." + allowedWebsites[action.title!]!)!
         aViewOfAWebpage.load(URLRequest(url: url))
     }
     
     func aViewOfAWebpage(_ aViewOfAWebpage: WKWebView, didFinish navigation: WKNavigation!) {
         title = aViewOfAWebpage.title
+    }
+    
+    func aViewOfAWebPage(_ aViewOfAWebpage: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+        
+        let url = navigationAction.request.url
+        
+        if let host = url?.host {
+            for (_, websites) in allowedWebsites {
+                if host.contains(websites) {
+                    decisionHandler(.allow)
+                    return
+                }
+            }
+        }
+            
+        decisionHandler(.cancel)
+        
     }
 
     override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
